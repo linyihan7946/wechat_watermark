@@ -2,6 +2,7 @@ import { WatermarkRegion } from "./MiniProgramWatermarkRemoverSimple";
 
 export class CanvasOperate {
   private m_ctx!: WechatMiniprogram.CanvasContext;
+  private m_canvasId!: string;
 
   constructor() {
 
@@ -9,7 +10,8 @@ export class CanvasOperate {
 
   // 1、创建画布内容
   public createCanvasContext(canvasId: string): WechatMiniprogram.CanvasContext {
-    this.m_ctx = wx.createCanvasContext(canvasId)
+    this.m_ctx = wx.createCanvasContext(canvasId);
+    this.m_canvasId = canvasId;
     return this.m_ctx;
   }
 
@@ -113,5 +115,39 @@ export class CanvasOperate {
     this.m_ctx.setFillStyle('#ffffff');
     this.m_ctx.fillRect(region.x, region.y, region.width, region.height);
     this.m_ctx.setGlobalAlpha(1.0);
+  }
+
+  /**
+   * 保存图片
+   * @param x 
+   * @param y 
+   * @param width 
+   * @param height 
+   * @returns 
+   */
+  public saveToTempFilePath(x: number, y: number, width: number, height: number): Promise<string> {
+    // 导出处理后的图片
+    return new Promise((resolve, reject) => {
+      if (!this.m_ctx) {
+        resolve("");
+        return;
+      }
+      this.m_ctx.draw(false, () => {
+        wx.canvasToTempFilePath({
+          canvasId: this.m_canvasId,
+          x,
+          y,
+          width,
+          height,
+          destWidth: width,
+          destHeight: height,
+          success: (res: any) => {
+            console.log(`res.tempFilePath=${res.tempFilePath}`);
+            resolve(res.tempFilePath);
+          },
+          fail: reject
+        });
+      });
+    });
   }
 }

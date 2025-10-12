@@ -421,8 +421,6 @@ Page({
 
   // 保存图片到相册
   async saveImageToAlbum(imagePath: string): Promise<void> {
-    console.log(`imagePath=${imagePath}`);
-    console.log(`image_url=${this.data.image_url}`);
     return new Promise((resolve, reject) => {
       wx.saveImageToPhotosAlbum({
         filePath: imagePath,
@@ -476,21 +474,20 @@ Page({
     const imageUrl = this.data.image_url;
     const remover = new MiniProgramWatermarkRemoverSimple("myCanvas");
     const regions: WatermarkRegion[] = [];
-    const {scale, pointLT} = this.data;
-    for (let i = 0; i < this.data.rectInfoList.length; i++) {
-      const r = this.data.rectInfoList[i];
-      regions.push({
-        x: (r.x - pointLT.x) * scale,
-        y: (r.y - pointLT.y) * scale,
-        width: r.width * scale,
-        height: r.height * scale,
-        method: 'blur'
-      })
-    }
+    // const {scale, pointLT} = this.data;
+    // for (let i = 0; i < this.data.rectInfoList.length; i++) {
+    //   const r = this.data.rectInfoList[i];
+    //   regions.push({
+    //     x: (r.x - pointLT.x) * scale,
+    //     y: (r.y - pointLT.y) * scale,
+    //     width: r.width * scale,
+    //     height: r.height * scale,
+    //     method: 'blur'
+    //   })
+    // }
 
     try {
       const processedImageData = await remover.removeWatermarks(imageUrl, regions);
-      console.log('处理完成，图片数据:', processedImageData.substring(0, 50) + '...');
       
       // 显示处理后的图片
       // this.displayImage(processedImageData, 'inpaint-result');

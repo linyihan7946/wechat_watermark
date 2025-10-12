@@ -17,6 +17,8 @@ export class MiniProgramWatermarkRemoverSimple {
   private ctx: WechatMiniprogram.CanvasContext | null = null;
   private canvasId: string;
   private isCanvasCreated: boolean = false;
+  private canvasWidth: number = 0;
+  private canvasHeight: number = 0;
 
   /**
    * 构造函数
@@ -59,7 +61,7 @@ export class MiniProgramWatermarkRemoverSimple {
   /**
    * 从本地路径加载图片
    */
-  private async loadImage(imagePath: string): Promise<any> {
+  private async loadImage(imagePath: string): Promise<{width: number, height: number, path: string}> {
     // 确保Canvas已初始化
     if (!this.isCanvasCreated) {
       await this.initCanvas();
@@ -75,7 +77,9 @@ export class MiniProgramWatermarkRemoverSimple {
       wx.getImageInfo({
         src: imagePath,
         success: (res: any) => {
-          resolve(res);
+          this.canvasWidth = res.width;
+          this.canvasHeight = res.height;
+          resolve({width: res.width, height: res.height, path: res.path});
         },
         fail: (error: any) => reject(error)
       });
@@ -158,7 +162,10 @@ export class MiniProgramWatermarkRemoverSimple {
       console.log("imgInfo=%o", imgInfo);
       
       // 绘制原始图片
-      this.ctx.drawImage(imgInfo.path, 0, 0, imgInfo.width, imgInfo.height);
+      this.ctx.drawImage(imgInfo.path, 
+        // 0, 0, imgInfo.width, imgInfo.height,
+        0, 0, this.canvasWidth, this.canvasHeight
+      );
       
       // 处理每个水印区域
       for (const region of regions) {
@@ -188,6 +195,12 @@ export class MiniProgramWatermarkRemoverSimple {
         this.ctx.draw(false, () => {
           wx.canvasToTempFilePath({
             canvasId: this.canvasId,
+            // x: 0,
+            // y: 0,
+            // width: imgInfo.width,
+            // height: imgInfo.height,
+            // destWidth: imgInfo.width,
+            // destHeight: imgInfo.height,
             success: (res: any) => {
               console.log(`res.tempFilePath=${res.tempFilePath}`);
               resolve(res.tempFilePath);
@@ -198,107 +211,6 @@ export class MiniProgramWatermarkRemoverSimple {
       });
     } catch (error) {
       throw new Error(`去除水印失败: ${error}`);
-    }
-  }
-
-  /**
-   * 去除水印
-   */
-  async removeWatermarks_v2(ctx: WechatMiniprogram.CanvasContext, imagePath: string, regions: WatermarkRegion[]): Promise<string> {
-    console.log("图片路径为%s", imagePath);
-    try {
-      // 确保Canvas已初始化
-      if (!this.isCanvasCreated) {
-        await this.initCanvas();
-      }
-
-      if (!ctx) {
-        throw new Error('Canvas未初始化，请先设置CanvasId');
-      }
-
-      let localImagePath = imagePath;
-      
-      // if (imagePath.startsWith('http')) {
-      //   localImagePath = await this.downloadImage(imagePath);
-      // }
-
-      const imgInfo = await this.loadImage(localImagePath);
-      console.log("imgInfo=%o", imgInfo);
-      
-      // 绘制原始图片
-      ctx.drawImage(imgInfo.path, 0, 0, imgInfo.width, imgInfo.height);
-      
-      // 处理每个水印区域
-      for (const region of regions) {
-        const method = region.method || 'blur';
-        
-        switch (method) {
-          case 'blur':
-            this.applyBlurMethod(region);
-            break;
-          case 'fill':
-            this.applyFillMethod(region);
-            break;
-          case 'inpaint':
-            this.applyInpaintMethod(region);
-            break;
-          default:
-            this.applyBlurMethod(region);
-        }
-      }
-      
-      // 导出处理后的图片
-      return new Promise((resolve, reject) => {
-        ctx.draw(false, () => {
-          wx.canvasToTempFilePath({
-            canvasId: this.canvasId,
-            success: (res: any) => {
-              resolve(res.tempFilePath);
-            },
-            fail: reject
-          });
-        });
-      });
-    } catch (error) {
-      throw new Error(`去除水印失败: ${error}`);
-    }
-  }
-
-  /**
-   * 保存处理后的图片到相册
-   */
-  async saveToAlbum(imagePath: string, regions: WatermarkRegion[]): Promise<void> {
-    try {
-      const processedImagePath = await this.removeWatermarks(imagePath, regions);
-      
-      return new Promise((resolve, reject) => {
-        wx.saveImageToPhotosAlbum({
-          filePath: processedImagePath,
-          success: () => {
-            wx.showToast({
-              title: '保存成功',
-              icon: 'success'
-            });
-            resolve();
-          },
-          fail: (error: any) => {
-            if (error.errMsg && error.errMsg.includes('auth deny')) {
-              wx.showModal({
-                title: '提示',
-                content: '需要授权保存图片到相册',
-                success: (res: any) => {
-                  if (res.confirm) {
-                    wx.openSetting();
-                  }
-                }
-              });
-            }
-            reject(error);
-          }
-        });
-      });
-    } catch (error) {
-      throw new Error(`保存失败: ${error}`);
     }
   }
 
