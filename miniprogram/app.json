@@ -26,5 +26,10 @@
         "selectedIconPath": "images/my_select.png"
       }
     ]
+  },
+  "permission": {
+    "scope.writePhotosAlbum": {
+      "desc": "保存处理后的图片到相册"
+    }
   }
 }

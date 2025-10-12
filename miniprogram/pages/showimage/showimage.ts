@@ -98,7 +98,6 @@ Page({
     const image_url = this.data.image_url;
     const ctx = new CanvasOperate();
     this.setData({ ctx });
-    console.log(ctx);
     ctx.createCanvasContext('myCanvas');
     this.getComponentSize(".view1").then(size => {
       this.setData({ isGetSize: true, canvasSize: size })
@@ -355,7 +354,7 @@ Page({
   },
 
   // 处理 Canvas 触摸结束事件
-  handleCanvasEnd(e: WechatMiniprogram.TouchEvent): void {
+  handleCanvasEnd(_e: WechatMiniprogram.TouchEvent): void {
   },
 
   // 获取 Canvas 位置信息
@@ -379,18 +378,103 @@ Page({
   },
 
   // 保存
-  save(): void {
-    // 将矩形映射到图片的真实坐标
+  async save(): Promise<void> {
+    try {
+      // 检查是否有选择的水印区域
+      if (this.data.rectInfoList.length === 0) {
+        wx.showToast({
+          title: '请先框选水印区域',
+          icon: 'none'
+        });
+        return;
+      }
 
-    // 去水印
-    this.removeWatermark();
+      // 显示加载提示
+      wx.showLoading({
+        title: '正在处理图片...'
+      });
+
+      // 去水印并获取处理后的图片路径
+      const processedImagePath = await this.removeWatermark();
+      
+      if (!processedImagePath) {
+        wx.hideLoading();
+        wx.showToast({
+          title: '图片处理失败',
+          icon: 'error'
+        });
+        return;
+      }
+
+      // 保存图片到相册
+      await this.saveImageToAlbum(processedImagePath);
+      
+    } catch (error) {
+      console.error('保存图片失败:', error);
+      wx.hideLoading();
+      wx.showToast({
+        title: '保存失败',
+        icon: 'error'
+      });
+    }
+  },
+
+  // 保存图片到相册
+  async saveImageToAlbum(imagePath: string): Promise<void> {
+    console.log(`imagePath=${imagePath}`);
+    console.log(`image_url=${this.data.image_url}`);
+    return new Promise((resolve, reject) => {
+      wx.saveImageToPhotosAlbum({
+        filePath: imagePath,
+        success: () => {
+          wx.hideLoading();
+          wx.showToast({
+            title: '保存成功',
+            icon: 'success'
+          });
+          resolve();
+        },
+        fail: (error: any) => {
+          wx.hideLoading();
+          console.error('保存到相册失败:', error);
+          
+          // 处理权限被拒绝的情况
+          if (error.errMsg && error.errMsg.includes('auth deny')) {
+            wx.showModal({
+              title: '提示',
+              content: '需要授权保存图片到相册，请在设置中开启权限',
+              confirmText: '去设置',
+              cancelText: '取消',
+              success: (res: any) => {
+                if (res.confirm) {
+                  wx.openSetting({
+                    success: (settingRes: any) => {
+                      if (settingRes.authSetting['scope.writePhotosAlbum']) {
+                        // 用户授权后重新尝试保存
+                        this.saveImageToAlbum(imagePath);
+                      }
+                    }
+                  });
+                }
+              }
+            });
+          } else {
+            wx.showToast({
+              title: '保存失败',
+              icon: 'error'
+            });
+          }
+          reject(error);
+        }
+      });
+    });
   },
 
   // 去水印
   async removeWatermark(): Promise<string> {
     let result = "";
     const imageUrl = this.data.image_url;
-    const remover = new MiniProgramWatermarkRemoverSimple("myCanvas1");
+    const remover = new MiniProgramWatermarkRemoverSimple("myCanvas");
     const regions: WatermarkRegion[] = [];
     const {scale, pointLT} = this.data;
     for (let i = 0; i < this.data.rectInfoList.length; i++) {

@@ -18,14 +18,26 @@ export class MiniProgramWatermarkRemoverSimple {
   private canvasId: string;
   private isCanvasCreated: boolean = false;
 
+  /**
+   * 构造函数
+   * @param canvasId 已有画布id
+   */
   constructor(canvasId?: string) {
     this.canvasId = canvasId || '';
   }
 
   /**
-   * 通过canvasId查询并设置Canvas
+   * 初始化Canvas（通过canvasId查询）
    */
-  private async queryCanvasById(): Promise<void> {
+  async initCanvas(): Promise<void> {
+    if (this.isCanvasCreated) {
+      return Promise.resolve();
+    }
+    
+    if (!this.canvasId) {
+      throw new Error('请先设置CanvasId');
+    }
+    
     return new Promise((resolve, reject) => {
       if (!this.canvasId) {
         reject(new Error('CanvasId未设置'));
@@ -42,30 +54,6 @@ export class MiniProgramWatermarkRemoverSimple {
         reject();
       }
     });
-  }
-
-  /**
-   * 设置CanvasId
-   */
-  setCanvasId(canvasId: string): void {
-    this.canvasId = canvasId;
-    this.isCanvasCreated = false;
-    this.ctx = null;
-  }
-
-  /**
-   * 初始化Canvas（通过canvasId查询）
-   */
-  async initCanvas(width: number = 300, height: number = 300): Promise<void> {
-    if (this.isCanvasCreated) {
-      return Promise.resolve();
-    }
-    
-    if (!this.canvasId) {
-      throw new Error('请先通过构造函数或setCanvasId方法设置CanvasId');
-    }
-    
-    return this.queryCanvasById();
   }
 
   /**
@@ -90,25 +78,6 @@ export class MiniProgramWatermarkRemoverSimple {
           resolve(res);
         },
         fail: (error: any) => reject(error)
-      });
-    });
-  }
-
-  /**
-   * 从网络URL下载图片到本地
-   */
-  private downloadImage(imageUrl: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      wx.downloadFile({
-        url: imageUrl,
-        success: (res: any) => {
-          if (res.statusCode === 200) {
-            resolve(res.tempFilePath);
-          } else {
-            reject(new Error('图片下载失败'));
-          }
-        },
-        fail: reject
       });
     });
   }
@@ -220,6 +189,7 @@ export class MiniProgramWatermarkRemoverSimple {
           wx.canvasToTempFilePath({
             canvasId: this.canvasId,
             success: (res: any) => {
+              console.log(`res.tempFilePath=${res.tempFilePath}`);
               resolve(res.tempFilePath);
             },
             fail: reject
@@ -422,7 +392,7 @@ export class MiniProgramWatermarkRemoverSimple {
    * 检查Canvas是否已创建
    */
   isCanvasReady(): boolean {
-    return (this.isCanvasCreated && this.ctx);
+    return (this.isCanvasCreated && this.ctx !== null);
   }
 
   /**
