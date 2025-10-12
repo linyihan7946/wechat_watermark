@@ -1,0 +1,14 @@
+<!--pages/showimage/showimage.wxml-->
+<view class="view1">
+  <canvas class="img" canvas-id="myCanvas"
+  bindtouchstart="handleCanvasStart" 
+  bindtouchmove="handleCanvasMove" 
+  bindtouchend="handleCanvasEnd" />
+</view>
+<view class="view3">
+  <canvas class="img1" canvas-id="myCanvas1" />
+</view>
+<view class="view2">
+<button type="primary" bind:tap="addRect">框选</button>
+<button type="primary" bind:tap="save">保存</button>
+</view>

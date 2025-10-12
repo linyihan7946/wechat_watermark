@@ -1,0 +1,20 @@
+/**index.wxss**/
+.view1{
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  width: 750rpx;
+  height: 400rpx;
+  border: 2rpx solid #000000;
+}
+
+.view2{
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  margin-top: 10rpx;
+}
+
+.btn1 {
+  width: 240rpx;
+}
