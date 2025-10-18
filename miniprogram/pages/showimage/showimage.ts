@@ -484,6 +484,7 @@ Page({
     const remover = new WatermarkRemover("myCanvas3");
     const regions: WatermarkRegion[] = [];
     const {scale, pointLT} = this.data;
+    // 因为rectInfoList是以canvas的坐标为基准的，所以需要将其转换为图片的坐标
     for (let i = 0; i < this.data.rectInfoList.length; i++) {
       const r = this.data.rectInfoList[i];
       regions.push({
