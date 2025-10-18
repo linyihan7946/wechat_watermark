@@ -1,4 +1,4 @@
-import { WatermarkRegion } from "./MiniProgramWatermarkRemoverSimple";
+import { WatermarkRegion } from "./WatermarkRemover";
 
 export class CanvasOperate {
   private m_ctx!: WechatMiniprogram.CanvasContext;

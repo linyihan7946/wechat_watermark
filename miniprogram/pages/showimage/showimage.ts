@@ -2,7 +2,8 @@
 import "../../utils/CanvasOperate";
 import { CanvasOperate } from "../../utils/CanvasOperate";
 import { GeometryUtils, Point, Rectangle } from "../../utils/geometry";
-import { WatermarkRegion, MiniProgramWatermarkRemoverSimple } from "../../utils/MiniProgramWatermarkRemoverSimple";
+import { ImageUtils } from "../../utils/ImageUtils";
+import { WatermarkRegion, WatermarkRemover } from "../../utils/WatermarkRemover";
 
 interface CanvasInfoType {
   lastEvtPos: { x: number, y: number };
@@ -59,6 +60,9 @@ Page({
     rectInfoList: [] as Rectangle[],
 
     isRemoveWatermark: false,// 是否移除水印
+
+    // 画布的风格
+    viewStyle: 'width: 100px; height: 100px;'
   },
 
   getComponentSize(id: string): Promise<{ width: number, height: number }> {
@@ -472,7 +476,12 @@ Page({
   async removeWatermark(): Promise<string> {
     let result = "";
     const imageUrl = this.data.image_url;
-    const remover = new MiniProgramWatermarkRemoverSimple("myCanvas");
+
+    // 设置容器尺寸
+    const imageInfo = await ImageUtils.Instance.getImageInfo(imageUrl);
+    this.setData({viewStyle: `width: ${imageInfo.width}px; height: ${imageInfo.height}px; display: block;`})
+    
+    const remover = new WatermarkRemover("myCanvas3");
     const regions: WatermarkRegion[] = [];
     // const {scale, pointLT} = this.data;
     // for (let i = 0; i < this.data.rectInfoList.length; i++) {
@@ -492,6 +501,10 @@ Page({
       // 显示处理后的图片
       // this.displayImage(processedImageData, 'inpaint-result');
       result = processedImageData;
+
+      remover.destroyCanvas();
+      this.setData({viewStyle: `width: ${imageInfo.width}px; height: ${imageInfo.height}px; display: none;`})
+
     } catch (error) {
       console.error('处理失败:', error);
     }
