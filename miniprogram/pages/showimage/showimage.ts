@@ -483,17 +483,17 @@ Page({
     
     const remover = new WatermarkRemover("myCanvas3");
     const regions: WatermarkRegion[] = [];
-    // const {scale, pointLT} = this.data;
-    // for (let i = 0; i < this.data.rectInfoList.length; i++) {
-    //   const r = this.data.rectInfoList[i];
-    //   regions.push({
-    //     x: (r.x - pointLT.x) * scale,
-    //     y: (r.y - pointLT.y) * scale,
-    //     width: r.width * scale,
-    //     height: r.height * scale,
-    //     method: 'blur'
-    //   })
-    // }
+    const {scale, pointLT} = this.data;
+    for (let i = 0; i < this.data.rectInfoList.length; i++) {
+      const r = this.data.rectInfoList[i];
+      regions.push({
+        x: (r.x - pointLT.x) / scale,
+        y: (r.y - pointLT.y) / scale,
+        width: r.width / scale,
+        height: r.height / scale,
+        method: 'blur'
+      })
+    }
 
     try {
       const processedImageData = await remover.removeWatermarks(imageUrl, regions);
